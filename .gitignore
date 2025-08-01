@@ -4,6 +4,7 @@
 
 # caches
 __pycache__/
+logs/
 
 # ignore output and temp folders
 output/

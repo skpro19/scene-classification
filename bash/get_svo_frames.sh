@@ -22,7 +22,7 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-python3 "$PROJECT_ROOT/scripts/get_svo_frames.py" \
+python3 "$PROJECT_ROOT/scripts/extract_svo_frames.py" \
     --input-dir "${INPUT_DIR:-data/svo-files}" \
     --output-dir "${OUTPUT_DIR:-data/svo-frames}" \
     --index-path "${INDEX_PATH:-index/processed-svos.json}" \

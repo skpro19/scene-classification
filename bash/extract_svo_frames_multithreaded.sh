@@ -17,7 +17,7 @@ if [[ "$VIRTUAL_ENV" != *".venv"* ]]; then
     exit 1
 fi
 
-python3 scripts/get_svo_frames_multithreaded.py \
+python3 scripts/extract_svo_frames_multithreaded.py \
     --input-dir "${INPUT_DIR:-data/svo-files}" \
     --output-dir "${OUTPUT_DIR:-data/svo-frames}" \
     --index-path "${INDEX_PATH:-index/processed-svos.json}" \

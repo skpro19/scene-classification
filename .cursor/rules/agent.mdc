@@ -2,7 +2,14 @@
 alwaysApply: true
 ---
 
+
+# Python instructions
+* Use typehints
 * Write modular code
 * Write concise comments for functions
+* Keep code-style consistent with the rest of the codebase.
+* Clean, consistent and readable code is paramount.
+
+
 
 * execute `source .venv/bin/activate` before running any `.sh` or `.py` scripts.
