@@ -20,5 +20,5 @@ fi
 python3 scripts/download_svos.py \
     --bucket "${S3_BUCKET:-sg-new-data}" \
     --prefix "${S3_PREFIX:-dairy_farm/}" \
-    --percentage "${PERCENTAGE:-0.2}" \
+    --percentage "${PERCENTAGE:-0.5}" \
     "$@"
