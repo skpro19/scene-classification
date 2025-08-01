@@ -1,0 +1,16 @@
+.venv
+.vscode
+
+
+# caches
+__pycache__/
+
+# ignore output and temp folders
+output/
+temp/
+
+# files
+*.whl
+
+# data
+data
