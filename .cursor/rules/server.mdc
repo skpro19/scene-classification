@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+* Use `backend/bash/start-svo-service.sh` to launch `svo-service`.
