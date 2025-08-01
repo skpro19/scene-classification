@@ -1,27 +1,5 @@
 #!/usr/bin/env python3
-"""
-Extract left images from every `.svo` file found under a directory tree.
 
-Usage (defaults are project-specific):
-    python3 scripts/get_svo_frames.py \
-        --input-dir data/svo-files \
-        --output-dir data/svo-frames \
-        --index-path index/processed-svos.json
-
-The script keeps an index of already–processed SVOs so the operation can be
-resumed safely at any point.
-
-Progress reporting
-------------------
-* Global: prints how many SVO files remain before starting each one.
-* Local: a tqdm progress-bar with ETA for the current file (frame extraction).
-
-Dependencies
-------------
-* pyzed ( `pip install pyzed==...` )
-* opencv-python
-* tqdm
-"""
 from __future__ import annotations
 
 import argparse
@@ -30,29 +8,12 @@ import sys
 import time
 from pathlib import Path
 
-# Third-party libs – imported lazily where possible to avoid cost when listing
-# files only.
 
-try:
-    import cv2  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover – ci may not have cv2
-    cv2 = None  # type: ignore
+import cv2
+from tqdm import tqdm
+import pyzed.sl as sl
 
-try:
-    from tqdm import tqdm  # type: ignore
-except ModuleNotFoundError:  # pragma: no cover
-    tqdm = None  # type: ignore
 
-# Import ZED SDK. Expect `pyzed` to be installed and expose the `sl` submodule.
-try:
-    import pyzed.sl as sl  # type: ignore
-    # sl = pyzed.sl  # type: ignore[attr-defined]
-except ModuleNotFoundError:
-    print(
-        "[ERROR] ZED SDK python module `pyzed` not found. Install it before running.",
-        file=sys.stderr,
-    )
-    sys.exit(1)
 
 def parse_args(argv: list[str] | None = None):
     p = argparse.ArgumentParser(description="Extract left images from SVO files")
