@@ -13,6 +13,8 @@ import cv2
 from tqdm import tqdm
 import pyzed.sl as sl
 
+from logger import LOGGER
+
 
 
 def parse_args(argv: list[str] | None = None):
@@ -51,7 +53,7 @@ def load_index(index_path: Path) -> set[str]:
                 if isinstance(data, list):
                     return set(data)
         except json.JSONDecodeError:
-            print(f"[WARN] Could not parse index file {index_path}. Starting fresh.")
+            LOGGER.warning(f"Could not parse index file {index_path}. Starting fresh.")
     return set()
 
 
@@ -70,9 +72,12 @@ def extract_frames(svo_file: Path, rel_path: Path, output_dir: Path):
     """Extract all left images from *svo_file* into *output_dir / rel_path without suffix*"""
     ensure_cv2()
 
+    LOGGER.info(f"Extracting frames from {svo_file}")
+    
     zed = sl.Camera()
 
-    init_params = sl.InitParameters()
+    init_params = sl.InitParameters(sdk_verbose=False)
+    
     # Disable depth for faster decode
     if hasattr(sl.DEPTH_MODE, "NONE"):
         init_params.depth_mode = sl.DEPTH_MODE.NONE  # type: ignore[attr-defined]
@@ -92,6 +97,11 @@ def extract_frames(svo_file: Path, rel_path: Path, output_dir: Path):
     total_frames: int | None = None
     if hasattr(zed, "get_svo_number_of_frames"):
         total_frames = zed.get_svo_number_of_frames()
+        LOGGER.info(f"Total frames: {total_frames}")
+    else:
+        LOGGER.warning("Could not get total number of frames")
+        total_frames = None
+
 
     mat = sl.Mat()
     runtime_params = sl.RuntimeParameters()
@@ -113,6 +123,7 @@ def extract_frames(svo_file: Path, rel_path: Path, output_dir: Path):
     saved_frame_id = 0
     try:
         while True:
+            # LOGGER.info(f"Grabbing frame {frame_id}")
             grab_status = zed.grab(runtime_params)
             if grab_status == sl.ERROR_CODE.END_OF_SVOFILE_REACHED:  # type: ignore[attr-defined]
                 break
@@ -121,13 +132,14 @@ def extract_frames(svo_file: Path, rel_path: Path, output_dir: Path):
 
             # Only process every 10th frame (1/10 of all frames)
             if frame_id % 10 == 0:
+                # LOGGER.info(f"Retrieving frame {frame_id}")
                 zed.retrieve_image(mat, sl.VIEW.LEFT)  # type: ignore[attr-defined]
                 
                 out_file = frame_root / f"{saved_frame_id:06d}.png"
                 # Use ZED SDK's built-in save method instead of OpenCV
                 save_status = mat.write(str(out_file))
                 if save_status != sl.ERROR_CODE.SUCCESS:  # type: ignore[attr-defined]
-                    print(f"Warning: Failed to save frame {saved_frame_id} for {rel_path}")
+                    LOGGER.warning(f"Failed to save frame {saved_frame_id} for {rel_path}")
                 else:
                     saved_frame_id += 1
                     if tqdm is not None:
@@ -156,7 +168,7 @@ def main(argv: list[str] | None = None):
     
     svo_files = list(input_dir.rglob("*.svo"))
     if not svo_files:
-        print(f"No .svo files found in {input_dir}")
+        LOGGER.warning(f"No .svo files found in {input_dir}")
         return
 
     # Randomize the order of SVO files
@@ -181,29 +193,23 @@ def main(argv: list[str] | None = None):
         rel_path = svo.relative_to(input_dir)
         rel_str = str(rel_path)
 
-        # Calculate global progress and ETA
-        processed_count = len(processed)
-        remaining_files = total - processed_count
-        if rel_str not in processed:
-            remaining_files -= 1  # exclude current file if not already processed
-            
-        elapsed_time = time.perf_counter() - start_time
-        if i > 1:
-            avg_time_per_file = elapsed_time / (i - 1)
-            eta_seconds = remaining_files * avg_time_per_file
-            eta_str = f" (ETA: {eta_seconds/60:.1f}min)"
-        else:
-            eta_str = ""
-
         if global_pbar is not None:
-            global_pbar.set_description(f"Global: {i}/{total} - {remaining_files} remaining{eta_str}")
+            global_pbar.set_description(f"Global: {i}/{total}")
         else:
-            print(f"[{i}/{total}] Processing {rel_str}")
-            print(f"   Remaining files: {remaining_files}{eta_str}")
+            LOGGER.info(f"[{i}/{total}] Processing {rel_str}")
 
-        if rel_str in processed and not args.overwrite:
-            if global_pbar is None:
-                print("   • Skipped – already processed")
+
+        found = rel_str in processed
+
+        if not found:
+            LOGGER.warning(f"{i} => {rel_str} => {found}")
+
+        # if found and not args.overwrite:
+        #     if global_pbar is None:
+        #         LOGGER.info("   • Skipped – already processed")
+        #     continue
+
+        if found and not args.overwrite:
             continue
 
         file_start_t = time.perf_counter()
@@ -211,13 +217,13 @@ def main(argv: list[str] | None = None):
             n_frames = extract_frames(svo, rel_path, output_dir)
         except Exception as exc:
             if global_pbar is None:
-                print(f"   [ERROR] Failed to process {rel_str}: {exc}")
+                LOGGER.error(f"Failed to process {rel_str}: {exc}")
             continue
         file_duration = time.perf_counter() - file_start_t
         fps = n_frames / file_duration if file_duration else 0
         
         if global_pbar is None:
-            print(f"   • Done. Extracted {n_frames} frames in {file_duration:.1f}s ({fps:.1f} fps)")
+            LOGGER.info(f"   • Done. Extracted {n_frames} frames in {file_duration:.1f}s ({fps:.1f} fps)")
 
         processed.add(rel_str)
         save_index(index_path, processed)
@@ -231,7 +237,7 @@ def main(argv: list[str] | None = None):
         global_pbar.close()
 
     pending = total - len(processed)
-    print(f"All done. Pending SVO files: {pending}")
+    LOGGER.info(f"All done. Pending SVO files: {pending}")
 
 
 if __name__ == "__main__":

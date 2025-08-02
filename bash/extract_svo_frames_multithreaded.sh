@@ -5,9 +5,6 @@
 # ./bash/run_get_svo_frames_multithreaded.sh --input-dir custom/svo --num-threads 6 --overwrite
 # OVERWRITE=1 ./bash/run_get_svo_frames_multithreaded.sh
 
-# Suppress ZED SDK logging
-export ZED_LOG_LEVEL=ERROR
-export ZED_SILENT_MODE=1
 
 # Check if virtual environment is activated
 if [[ "$VIRTUAL_ENV" != *".venv"* ]]; then

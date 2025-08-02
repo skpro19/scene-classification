@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 # Usage examples:
-# ./bash/get_svo_frames.sh
-# INPUT_DIR=custom/svo-files OUTPUT_DIR=custom/frames ./bash/get_svo_frames.sh
-# ./bash/get_svo_frames.sh --input-dir custom/svo --overwrite
-# OVERWRITE=1 ./bash/get_svo_frames.sh
+# ./bash/extract_svo_frames.sh
+# INPUT_DIR=custom/svo-files OUTPUT_DIR=custom/frames ./bash/extract_svo_frames.sh
+# ./bash/extract_svo_frames.sh --input-dir custom/svo --overwrite
+# OVERWRITE=1 ./bash/extract_svo_frames.sh
 
 set -euo pipefail
-
-# Suppress ZED SDK logging
-export ZED_LOG_LEVEL=ERROR
-export ZED_SILENT_MODE=1
 
 # Check if virtual environment is activated
 if [[ "$VIRTUAL_ENV" != *".venv"* ]]; then

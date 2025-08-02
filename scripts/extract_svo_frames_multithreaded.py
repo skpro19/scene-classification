@@ -23,11 +23,6 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     tqdm = None  # type: ignore
 
-# Suppress ZED SDK logging at module level
-import os
-os.environ['ZED_LOG_LEVEL'] = 'ERROR'  # Only show errors, suppress INFO/WARNING
-os.environ['ZED_SILENT_MODE'] = '1'  # Enable silent mode
-
 # Import ZED SDK. Expect `pyzed` to be installed and expose the `sl` submodule.
 try:
     import pyzed.sl as sl  # type: ignore
@@ -126,7 +121,7 @@ def extract_frames_threaded(svo_file: Path, rel_path: Path, output_dir: Path, th
 
     zed = sl.Camera()
 
-    init_params = sl.InitParameters()
+    init_params = sl.InitParameters(sdk_verbose=False)
     # Disable depth for faster decode
     if hasattr(sl.DEPTH_MODE, "NONE"):
         init_params.depth_mode = sl.DEPTH_MODE.NONE  # type: ignore[attr-defined]
