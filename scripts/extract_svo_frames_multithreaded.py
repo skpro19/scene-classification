@@ -66,6 +66,11 @@ def parse_args(argv: list[str] | None = None):
         default=4,
         help="Number of threads to use for concurrent processing",
     )
+    p.add_argument(
+        "--resolution",
+        default="640,480",
+        help="Image resolution as 'width,height' (e.g., '640,480', '1920,1080')",
+    )
     return p.parse_args(argv)
 
 
@@ -115,7 +120,7 @@ class ThreadSafeIndex:
             return len(self.processed)
 
 
-def extract_frames_threaded(svo_file: Path, rel_path: Path, output_dir: Path, thread_id: int = 0):
+def extract_frames_threaded(svo_file: Path, rel_path: Path, output_dir: Path, thread_id: int = 0, resolution: str = "640,480"):
     """Extract all left images from *svo_file* into *output_dir / rel_path without suffix*"""
     ensure_cv2()
 
@@ -170,7 +175,10 @@ def extract_frames_threaded(svo_file: Path, rel_path: Path, output_dir: Path, th
 
             # Only process every 10th frame (1/10 of all frames)
             if frame_id % 10 == 0:
-                zed.retrieve_image(mat, sl.VIEW.LEFT)  # type: ignore[attr-defined]
+                # Parse resolution from string (e.g., "640,480")
+                width, height = map(int, resolution.split(","))
+                custom_res = sl.Resolution(width, height)
+                zed.retrieve_image(mat, sl.VIEW.LEFT, resolution=custom_res)  # type: ignore[attr-defined]
                 
                 out_file = frame_root / f"{saved_frame_id:06d}.png"
                 # Use ZED SDK's built-in save method instead of OpenCV
@@ -191,9 +199,9 @@ def extract_frames_threaded(svo_file: Path, rel_path: Path, output_dir: Path, th
     return saved_frame_id
 
 
-def process_svo_file(args: tuple[Path, Path, Path, int, ThreadSafeIndex, bool]) -> Dict[str, Any]:
+def process_svo_file(args: tuple[Path, Path, Path, int, ThreadSafeIndex, bool, str]) -> Dict[str, Any]:
     """Process a single SVO file - designed to be called by thread pool"""
-    svo_file, rel_path, output_dir, thread_id, index_manager, overwrite = args
+    svo_file, rel_path, output_dir, thread_id, index_manager, overwrite, resolution = args
     rel_str = str(rel_path)
     
     # Check if already processed
@@ -208,7 +216,7 @@ def process_svo_file(args: tuple[Path, Path, Path, int, ThreadSafeIndex, bool]) 
     
     file_start_t = time.perf_counter()
     try:
-        n_frames = extract_frames_threaded(svo_file, rel_path, output_dir, thread_id)
+        n_frames = extract_frames_threaded(svo_file, rel_path, output_dir, thread_id, resolution)
         file_duration = time.perf_counter() - file_start_t
         
         # Mark as processed
@@ -286,7 +294,7 @@ def main(argv: list[str] | None = None):
     # Prepare arguments for thread pool
     thread_args = []
     for i, (svo, rel_path) in enumerate(to_process):
-        thread_args.append((svo, rel_path, output_dir, i % args.num_threads, index_manager, args.overwrite))
+        thread_args.append((svo, rel_path, output_dir, i % args.num_threads, index_manager, args.overwrite, args.resolution))
     
     # Process files using thread pool
     completed = 0

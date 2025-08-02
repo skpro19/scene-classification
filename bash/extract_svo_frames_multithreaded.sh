@@ -1,9 +1,10 @@
 #!/bin/bash
 # Usage examples:
-# ./bash/run_get_svo_frames_multithreaded.sh
-# INPUT_DIR=custom/svo-files OUTPUT_DIR=custom/frames NUM_THREADS=8 ./bash/run_get_svo_frames_multithreaded.sh
-# ./bash/run_get_svo_frames_multithreaded.sh --input-dir custom/svo --num-threads 6 --overwrite
-# OVERWRITE=1 ./bash/run_get_svo_frames_multithreaded.sh
+# ./bash/extract_svo_frames_multithreaded.sh
+# INPUT_DIR=custom/svo-files OUTPUT_DIR=custom/frames NUM_THREADS=8 ./bash/extract_svo_frames_multithreaded.sh
+# RESOLUTION=1920,1080 ./bash/extract_svo_frames_multithreaded.sh
+# ./bash/extract_svo_frames_multithreaded.sh --input-dir custom/svo --num-threads 6 --overwrite
+# OVERWRITE=1 ./bash/extract_svo_frames_multithreaded.sh
 
 
 # Check if virtual environment is activated
@@ -19,5 +20,6 @@ python3 scripts/extract_svo_frames_multithreaded.py \
     --output-dir "${OUTPUT_DIR:-data/svo-frames}" \
     --index-path "${INDEX_PATH:-index/processed-svos.json}" \
     --num-threads "${NUM_THREADS:-10}" \
+    --resolution "${RESOLUTION:-640,480}" \
     ${OVERWRITE:+--overwrite} \
     "$@" 

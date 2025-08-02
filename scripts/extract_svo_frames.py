@@ -42,6 +42,11 @@ def parse_args(argv: list[str] | None = None):
         action="store_true",
         help="Re-extract frames even if the SVO already appears in the index",
     )
+    p.add_argument(
+        "--resolution",
+        default="640,480",
+        help="Image resolution as 'width,height' (e.g., '640,480', '1920,1080')",
+    )
     return p.parse_args(argv)
 
 
@@ -68,7 +73,7 @@ def ensure_cv2():  # pragma: no cover
         raise RuntimeError("OpenCV (cv2) is required to save images but is not installed.")
 
 
-def extract_frames(svo_file: Path, rel_path: Path, output_dir: Path):
+def extract_frames(svo_file: Path, rel_path: Path, output_dir: Path, resolution: str = "640,480"):
     """Extract all left images from *svo_file* into *output_dir / rel_path without suffix*"""
     ensure_cv2()
 
@@ -133,7 +138,10 @@ def extract_frames(svo_file: Path, rel_path: Path, output_dir: Path):
             # Only process every 10th frame (1/10 of all frames)
             if frame_id % 10 == 0:
                 # LOGGER.info(f"Retrieving frame {frame_id}")
-                zed.retrieve_image(mat, sl.VIEW.LEFT)  # type: ignore[attr-defined]
+                # Parse resolution from string (e.g., "640,480")
+                width, height = map(int, resolution.split(","))
+                custom_res = sl.Resolution(width, height)
+                zed.retrieve_image(mat, sl.VIEW.LEFT, resolution=custom_res)  # type: ignore[attr-defined]
                 
                 out_file = frame_root / f"{saved_frame_id:06d}.png"
                 # Use ZED SDK's built-in save method instead of OpenCV
@@ -214,7 +222,7 @@ def main(argv: list[str] | None = None):
 
         file_start_t = time.perf_counter()
         try:
-            n_frames = extract_frames(svo, rel_path, output_dir)
+            n_frames = extract_frames(svo, rel_path, output_dir, args.resolution)
         except Exception as exc:
             if global_pbar is None:
                 LOGGER.error(f"Failed to process {rel_str}: {exc}")
