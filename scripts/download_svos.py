@@ -155,7 +155,7 @@ def get_svo_files(bucket_name: str, prefix: str, download_percentage: float = 0.
         
         # Get the relative path for the local directory
         relative_folder_path: str = os.path.relpath(folder, prefix)
-        local_dir: str = os.path.join("data", "svo-frames", relative_folder_path)
+        local_dir: str = os.path.join("data", "svo-files", relative_folder_path)
         os.makedirs(local_dir, exist_ok=True)
 
         LOGGER.info(f"\nDownloading {num_to_download} of {len(files_to_download)} .svo files from '{folder}' to '{local_dir}'...")
